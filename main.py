@@ -25,8 +25,14 @@ class Tokenizer():
             eof = True
 
         if not eof:
-            while self.origin[self.position] == ' ' and self.position != len(self.origin):
+            while self.origin[self.position] == ' ':
                 self.position += 1
+                if self.position == len(self.origin):
+                    type = 'EOF'
+                    value = 0
+                    eof = True
+                    self.actual = Token(type, str(value))
+                    return self.actual
 
 
             while self.position < len(self.origin) and self.origin[self.position].isnumeric():
@@ -88,7 +94,7 @@ class Parser():
         if new_token.type == 'EOF':
             return result
         else:
-            raise SystemError("Invalid Chain exception")
+            raise SyntaxError("Invalid Chain Exception (tip: do not put spaces between numbers)")
 
 
     @staticmethod
