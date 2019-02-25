@@ -4,6 +4,7 @@ number_list = input_no_space.split(";")
 size = len(number_list)
 broken_text_list = []
 
+
 for i in user_input:
     broken_text_list.append(i)
 
