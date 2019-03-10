@@ -1,3 +1,28 @@
+class PrePro():
+
+    def filter(code):
+        i = 0
+        to_delete = []
+        text = list(code)
+        while i < len(text):
+            if text[i] == "'":
+                j = i
+                while text[j] != "\n":
+                    j += 1
+                    if j == len(text):
+                        break
+                    
+                to_delete.append([i,j])
+            i += 1                    
+        
+        for k in reversed(range(len(to_delete))):
+            i = to_delete[k][0]
+            j = to_delete[k][1]
+            del text[i:j+1]
+
+        string = ''.join(text)
+        return string
+
 class Token():
 
     def __init__(self, type, value):
@@ -52,6 +77,16 @@ class Tokenizer():
                     type = 'MINUS'
                     value = '-'
                     self.position += 1
+
+                elif self.origin[self.position] == '*':
+                    type = 'MULT'
+                    value = '*'
+                    self.position += 1
+
+                elif self.origin[self.position] == '/':
+                    type = 'DIV'
+                    value = '/'
+                    self.position += 1
                 else:
                     raise SyntaxError("Invalid Sentence (Sentence must start with number)")
         if int_flag:
@@ -64,37 +99,69 @@ class Tokenizer():
 
 class Parser():
 
-    # tokens = Tokenizer()
-
     def parseExpression():
 
         if Parser.tokens.actual.type == 'INT':
+            
             result = int(Parser.tokens.actual.value)
             new_token = Parser.tokens.selectNext()
+        
+            result, new_token = Parser.termo(result, new_token)
+
             while new_token.type == 'PLUS' or new_token.type == 'MINUS':
                 # se token atual e +
                 if new_token.type == 'PLUS':
                     new_token = Parser.tokens.selectNext()
                     if new_token.type == 'INT':
-                        result += int(new_token.value)
+                        tmp = result
+                        result, new_token = Parser.termo(int(new_token.value), Parser.tokens.selectNext())
+                        tmp += result
+                        result = tmp
                     else:
                         raise TypeError("Invalid Token Error: ", new_token.type)
                 # se token atual e -
                 elif new_token.type == 'MINUS':
                     new_token = Parser.tokens.selectNext()
                     if new_token.type == 'INT':
-                        result -= int(new_token.value)
+                        tmp = result
+                        result, new_token = Parser.termo(int(new_token.value), Parser.tokens.selectNext())
+                        tmp -= result
+                        result = tmp
                     else:
                         raise TypeError("Invalid Token Error: ", new_token.type)
 
-                new_token = Parser.tokens.selectNext()
             # fim do while
+
         else:
             raise SyntaxError("Invalid Sentence (Sentence must start with number)")
         if new_token.type == 'EOF':
             return result
         else:
             raise SyntaxError("Invalid Chain Exception (tip: do not put spaces between numbers)")
+
+
+
+    def termo(result, new_token):
+        #enter termo
+        while new_token.type == 'MULT' or new_token.type == 'DIV':
+            # se token atual e *
+            if new_token.type == 'MULT':
+                new_token = Parser.tokens.selectNext()
+                if new_token.type == 'INT':
+                    result *= int(new_token.value)
+                else:
+                    raise TypeError("Invalid Token Error: ", new_token.type)
+            # se token atual e /
+            elif new_token.type == 'DIV':
+                new_token = Parser.tokens.selectNext()
+                if new_token.type == 'INT':
+                    result /= int(new_token.value)
+                else:
+                    raise TypeError("Invalid Token Error: ", new_token.type)
+
+            new_token = Parser.tokens.selectNext()
+        # fim do while
+        return result, new_token
 
 
     @staticmethod
@@ -105,5 +172,6 @@ class Parser():
 
 if __name__ == '__main__':
     print("Your input: ")
-    code = input()
+    text = input()
+    code = PrePro.filter(text)
     print(Parser.run(code))
