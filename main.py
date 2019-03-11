@@ -100,69 +100,64 @@ class Tokenizer():
 class Parser():
 
     def parseExpression():
-
-        if Parser.tokens.actual.type == 'INT':
-            
-            result = int(Parser.tokens.actual.value)
-            new_token = Parser.tokens.selectNext()
         
-            result, new_token = Parser.termo(result, new_token)
+       
+        result = Parser.termo()
 
-            while new_token.type == 'PLUS' or new_token.type == 'MINUS':
-                # se token atual e +
-                if new_token.type == 'PLUS':
-                    new_token = Parser.tokens.selectNext()
-                    if new_token.type == 'INT':
-                        tmp = result
-                        result, new_token = Parser.termo(int(new_token.value), Parser.tokens.selectNext())
-                        tmp += result
-                        result = tmp
-                    else:
-                        raise TypeError("Invalid Token Error: ", new_token.type)
-                # se token atual e -
-                elif new_token.type == 'MINUS':
-                    new_token = Parser.tokens.selectNext()
-                    if new_token.type == 'INT':
-                        tmp = result
-                        result, new_token = Parser.termo(int(new_token.value), Parser.tokens.selectNext())
-                        tmp -= result
-                        result = tmp
-                    else:
-                        raise TypeError("Invalid Token Error: ", new_token.type)
+        while Parser.tokens.actual.type == 'PLUS' or Parser.tokens.actual.type == 'MINUS':
+            # se token atual e +
+            if Parser.tokens.actual.type == 'PLUS':
 
+                Parser.tokens.selectNext()
+        
+                result += Parser.termo()
+
+            # se token atual e -
+            elif Parser.tokens.actual.type == 'MINUS':
+                
+                Parser.tokens.selectNext()
+            
+                result -= Parser.termo()
+            else:
+                print("ultimate super master error")
             # fim do while
 
-        else:
-            raise SyntaxError("Invalid Sentence (Sentence must start with number)")
-        if new_token.type == 'EOF':
+        
+        if Parser.tokens.actual.type == 'EOF':
             return result
         else:
             raise SyntaxError("Invalid Chain Exception (tip: do not put spaces between numbers)")
 
 
+    def termo():
+        # initialize result
+        new_token = Parser.tokens.actual
 
-    def termo(result, new_token):
-        #enter termo
-        while new_token.type == 'MULT' or new_token.type == 'DIV':
-            # se token atual e *
-            if new_token.type == 'MULT':
-                new_token = Parser.tokens.selectNext()
-                if new_token.type == 'INT':
-                    result *= int(new_token.value)
-                else:
-                    raise TypeError("Invalid Token Error: ", new_token.type)
-            # se token atual e /
-            elif new_token.type == 'DIV':
-                new_token = Parser.tokens.selectNext()
-                if new_token.type == 'INT':
-                    result /= int(new_token.value)
-                else:
-                    raise TypeError("Invalid Token Error: ", new_token.type)
-
+        
+        if new_token.type == 'INT':
+            result = int(new_token.value)
             new_token = Parser.tokens.selectNext()
-        # fim do while
-        return result, new_token
+            while new_token.type == 'MULT' or new_token.type == 'DIV':
+                # se token atual e *
+                if new_token.type == 'MULT':
+                    new_token = Parser.tokens.selectNext()
+                    if new_token.type == 'INT':
+                        result *= int(new_token.value)
+                    else:
+                        raise TypeError("Invalid Token Error: ", new_token.type)
+                # se token atual e /
+                elif new_token.type == 'DIV':
+                    new_token = Parser.tokens.selectNext()
+                    if new_token.type == 'INT':
+                        result //= int(new_token.value)
+                    else:
+                        raise TypeError("Invalid Token Error: ", new_token.type)
 
+                new_token = Parser.tokens.selectNext()
+            # fim do while
+            return result
+        else:
+            raise TypeError("Invalid Token Error (should have gotten INT): ", new_token.type)
 
     @staticmethod
     def run(code):
