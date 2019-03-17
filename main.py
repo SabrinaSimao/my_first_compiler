@@ -87,8 +87,16 @@ class Tokenizer():
                     type = 'DIV'
                     value = '/'
                     self.position += 1
+                elif self.origin[self.position] == ')':
+                    type = ')'
+                    value = ')'
+                    self.position +=1
+                elif self.origin[self.position] == '(':
+                    type = '('
+                    value = '('
+                    self.position +=1
                 else:
-                    raise SyntaxError("Invalid Sentence (Sentence must start with number)")
+                    raise SyntaxError("Invalid Sentence")
         if int_flag:
             self.actual = Token(type, str(int_token))
             return self.actual
@@ -102,67 +110,97 @@ class Parser():
     def parseExpression():
         
        
-        result = Parser.termo()
+        result = int(Parser.termo())
 
         while Parser.tokens.actual.type == 'PLUS' or Parser.tokens.actual.type == 'MINUS':
-            # se token atual e +
+             # if actual token is +
             if Parser.tokens.actual.type == 'PLUS':
 
                 Parser.tokens.selectNext()
         
-                result += Parser.termo()
+                result += int(Parser.termo())
 
-            # se token atual e -
+             # if actual token is -
             elif Parser.tokens.actual.type == 'MINUS':
                 
                 Parser.tokens.selectNext()
             
-                result -= Parser.termo()
+                result -= int(Parser.termo())
             else:
                 print("ultimate super master error")
-            # fim do while
+            # end of while
 
-        
-        if Parser.tokens.actual.type == 'EOF':
-            return result
-        else:
-            raise SyntaxError("Invalid Chain Exception (tip: do not put spaces between numbers)")
-
+        return result
 
     def termo():
-        # initialize result
-        new_token = Parser.tokens.actual
 
+        result = int(Parser.fator())
+
+        while Parser.tokens.actual.type == 'MULT' or Parser.tokens.actual.type == 'DIV':
+            # if actual token is +
+            if Parser.tokens.actual.type == 'MULT':
+
+                Parser.tokens.selectNext()
         
-        if new_token.type == 'INT':
-            result = int(new_token.value)
-            new_token = Parser.tokens.selectNext()
-            while new_token.type == 'MULT' or new_token.type == 'DIV':
-                # se token atual e *
-                if new_token.type == 'MULT':
-                    new_token = Parser.tokens.selectNext()
-                    if new_token.type == 'INT':
-                        result *= int(new_token.value)
-                    else:
-                        raise TypeError("Invalid Token Error: ", new_token.type)
-                # se token atual e /
-                elif new_token.type == 'DIV':
-                    new_token = Parser.tokens.selectNext()
-                    if new_token.type == 'INT':
-                        result //= int(new_token.value)
-                    else:
-                        raise TypeError("Invalid Token Error: ", new_token.type)
+                result *= int(Parser.fator())
 
-                new_token = Parser.tokens.selectNext()
-            # fim do while
+            # if actual token is -
+            elif Parser.tokens.actual.type == 'DIV':
+                
+                Parser.tokens.selectNext()
+            
+                result /= int(Parser.fator())
+            else:
+                print("ultimate super master error")
+            # end of while
+
+        return result
+
+    def fator():
+
+        new_token = Parser.tokens.actual
+        result = 0
+
+        # check if token is unary operator
+        if(new_token.type == "PLUS" or new_token.type == "MINUS"):
+            if(new_token.type == "PLUS"):
+                Parser.tokens.selectNext()
+                result += int(Parser.fator())
+                return result
+            elif(new_token.type == "MINUS"):
+                Parser.tokens.selectNext()
+                result -= int(Parser.fator())
+                return result
+            else:
+                raise TypeError("Invalid Token Error (should have gotten INT): ", new_token.type)
+
+        #cheeck if token is a number
+        elif new_token.type == "INT":
+            result = new_token.value
+            Parser.tokens.selectNext()
             return result
+
+        #check if token is parentesis
+        elif new_token.type == "(":
+            Parser.tokens.selectNext()
+            result = int(Parser.parseExpression())
+            new_token = Parser.tokens.actual
+            if new_token.type == ")":
+                Parser.tokens.selectNext()
+                return result
+            else:
+                raise TypeError("Invalid Token Error - Expecting Parentesis ')' ")
         else:
-            raise TypeError("Invalid Token Error (should have gotten INT): ", new_token.type)
+            raise SyntaxError("Invalid Token - Sentence should start with number, parentesis or operator (+,-): ", new_token.type)
 
     @staticmethod
     def run(code):
         Parser.tokens = Tokenizer(code)
-        return Parser.parseExpression()
+        result =  Parser.parseExpression()
+        if Parser.tokens.actual.type == 'EOF':
+            return result
+        else:
+            raise SyntaxError("Invalid Chain Exception (tip: do not put spaces between numbers)")
 
 
 if __name__ == '__main__':
