@@ -7,7 +7,7 @@ class PrePro():
         while i < len(text):
             if text[i] == "'":
                 j = i
-                while text[j] != "\n":
+                while text[j] != "y":
                     j += 1
                     if j == len(text):
                         break
@@ -22,6 +22,65 @@ class PrePro():
 
         string = ''.join(text)
         return string
+
+
+class Node():
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+    
+    def Evaluate(self):
+        pass
+
+class UnOp(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self):
+        if self.value == '+':
+            return self.children[0].Evaluate()
+        elif self.value == '-':
+            return -self.children[0].Evaluate()
+        else:
+            print("master blaster error")
+
+class BinOp(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self):
+        if self.value == '+':
+            return (self.children[0].Evaluate() + self.children[1].Evaluate())
+        elif self.value == '-':
+            return (self.children[0].Evaluate() - self.children[1].Evaluate())
+        elif self.value == '*':
+            return (self.children[0].Evaluate() * self.children[1].Evaluate())
+        elif self.value == '/':
+            return (self.children[0].Evaluate() // self.children[1].Evaluate())
+        else:
+            print("master blaster error")
+
+class IntVal(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self):
+        return int(self.value)
+
+class NoOp(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self):
+        pass
 
 class Token():
 
@@ -110,84 +169,93 @@ class Parser():
     def parseExpression():
         
        
-        result = int(Parser.termo())
+        left = Parser.termo()
 
         while Parser.tokens.actual.type == 'PLUS' or Parser.tokens.actual.type == 'MINUS':
              # if actual token is +
             if Parser.tokens.actual.type == 'PLUS':
 
                 Parser.tokens.selectNext()
-        
-                result += int(Parser.termo())
+                
+                right = Parser.termo()
+
+                left = BinOp('+', [left, right])
 
              # if actual token is -
             elif Parser.tokens.actual.type == 'MINUS':
                 
                 Parser.tokens.selectNext()
-            
-                result -= int(Parser.termo())
+                
+                right = Parser.termo()
+
+                left = BinOp('-', [left, right])
+
             else:
                 print("ultimate super master error")
             # end of while
 
-        return result
+        return left
 
     def termo():
 
-        result = int(Parser.fator())
+        left = Parser.fator()
 
         while Parser.tokens.actual.type == 'MULT' or Parser.tokens.actual.type == 'DIV':
             # if actual token is +
             if Parser.tokens.actual.type == 'MULT':
 
                 Parser.tokens.selectNext()
-        
-                result *= int(Parser.fator())
+                
+                right = Parser.fator()
+
+                left = BinOp('*', [left, right])
 
             # if actual token is -
             elif Parser.tokens.actual.type == 'DIV':
                 
                 Parser.tokens.selectNext()
-            
-                result /= int(Parser.fator())
+                
+                right = Parser.fator()
+                
+                left = BinOp('/', [left, right])
+
             else:
                 print("ultimate super master error")
             # end of while
 
-        return result
+        return left
 
     def fator():
 
         new_token = Parser.tokens.actual
-        result = 0
 
         # check if token is unary operator
         if(new_token.type == "PLUS" or new_token.type == "MINUS"):
             if(new_token.type == "PLUS"):
+                
                 Parser.tokens.selectNext()
-                result += int(Parser.fator())
-                return result
+                return UnOp('+',[Parser.fator()])
+                
             elif(new_token.type == "MINUS"):
                 Parser.tokens.selectNext()
-                result -= int(Parser.fator())
-                return result
+                return UnOp('-',[Parser.fator()])
             else:
                 raise TypeError("Invalid Token Error (should have gotten INT): ", new_token.type)
 
         #cheeck if token is a number
         elif new_token.type == "INT":
-            result = new_token.value
+            left = IntVal(new_token.value, [])
             Parser.tokens.selectNext()
-            return result
+            return left
 
         #check if token is parentesis
         elif new_token.type == "(":
             Parser.tokens.selectNext()
-            result = int(Parser.parseExpression())
+            left = Parser.parseExpression()
             new_token = Parser.tokens.actual
             if new_token.type == ")":
                 Parser.tokens.selectNext()
-                return result
+                return left
             else:
                 raise TypeError("Invalid Token Error - Expecting Parentesis ')' ")
         else:
@@ -207,4 +275,5 @@ if __name__ == '__main__':
     print("Your input: ")
     text = input()
     code = PrePro.filter(text)
-    print(Parser.run(code))
+    res = Parser.run(code)
+    print(res.Evaluate())
