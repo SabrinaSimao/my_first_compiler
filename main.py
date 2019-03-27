@@ -1,3 +1,5 @@
+reserved = ['PRINT', 'BEGIN', 'END']
+
 class PrePro():
 
     def filter(code):
@@ -7,7 +9,7 @@ class PrePro():
         while i < len(text):
             if text[i] == "'":
                 j = i
-                while text[j] != "y":
+                while text[j] != "\n":
                     j += 1
                     if j == len(text):
                         break
@@ -23,14 +25,36 @@ class PrePro():
         string = ''.join(text)
         return string
 
+class SymbolTable():
+    def __init__(self):
+        self.dic = {}
+
+    def getter(self, index):
+        if index in self.dic:
+            return self.dic[index]
+        else:
+            raise ValueError("Variable does not exist", index)
+
+    def setter(self, index, value):
+        self.dic[index] = value
 
 class Node():
     def __init__(self, value, children):
         self.value = value
         self.children = children
     
-    def Evaluate(self):
+    def Evaluate(self, ST):
         pass
+
+class Assignment(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self, ST):
+        ST.setter(self.children[0].value, self.children[1].Evaluate(ST))
+
 
 class UnOp(Node):
     def __init__(self, value, children):
@@ -38,13 +62,30 @@ class UnOp(Node):
         self.children = children
 
     
-    def Evaluate(self):
+    def Evaluate(self, ST):
         if self.value == '+':
-            return self.children[0].Evaluate()
+            return self.children[0].Evaluate(ST)
         elif self.value == '-':
-            return -self.children[0].Evaluate()
+            return -self.children[0].Evaluate(ST)
         else:
             print("master blaster error")
+
+class Statements():
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    def Evaluate(self, ST):
+        for i in self.children:
+           i.Evaluate(ST)
+
+class Print(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+    
+    def Evaluate(self, ST):
+        print(self.children[0].Evaluate(ST))
 
 class BinOp(Node):
     def __init__(self, value, children):
@@ -52,15 +93,15 @@ class BinOp(Node):
         self.children = children
 
     
-    def Evaluate(self):
+    def Evaluate(self, ST):
         if self.value == '+':
-            return (self.children[0].Evaluate() + self.children[1].Evaluate())
+            return (self.children[0].Evaluate(ST) + self.children[1].Evaluate(ST))
         elif self.value == '-':
-            return (self.children[0].Evaluate() - self.children[1].Evaluate())
+            return (self.children[0].Evaluate(ST) - self.children[1].Evaluate(ST))
         elif self.value == '*':
-            return (self.children[0].Evaluate() * self.children[1].Evaluate())
+            return (self.children[0].Evaluate(ST) * self.children[1].Evaluate(ST))
         elif self.value == '/':
-            return (self.children[0].Evaluate() // self.children[1].Evaluate())
+            return (self.children[0].Evaluate(ST) // self.children[1].Evaluate(ST))
         else:
             print("master blaster error")
 
@@ -70,8 +111,17 @@ class IntVal(Node):
         self.children = children
 
     
-    def Evaluate(self):
+    def Evaluate(self, ST):
         return int(self.value)
+
+class Identifier(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self, ST):
+        return ST.getter(self.value)
 
 class NoOp(Node):
     def __init__(self, value, children):
@@ -79,7 +129,7 @@ class NoOp(Node):
         self.children = children
 
     
-    def Evaluate(self):
+    def Evaluate(self, ST):
         pass
 
 class Token():
@@ -97,11 +147,10 @@ class Tokenizer():
         self.actual = self.selectNext()
 
     def selectNext(self):
-        int_token = ""
-        int_flag = False
         eof = False
         type = None
-        value = None
+        value = ""
+        string = ""
 
         if self.position == len(self.origin):
             type = 'EOF'
@@ -118,53 +167,110 @@ class Tokenizer():
                     self.actual = Token(type, str(value))
                     return self.actual
 
+            if self.origin[self.position].isnumeric():
+                while self.position < len(self.origin) and self.origin[self.position].isnumeric():
+                    type = 'INT'
+                    value += self.origin[self.position]
+                    self.position += 1
 
-            while self.position < len(self.origin) and self.origin[self.position].isnumeric():
-                type = 'INT'
-                int_token += self.origin[self.position]
+            elif self.origin[self.position].isalpha():
+                while self.position < len(self.origin) and self.origin[self.position].isalpha():
+                    type = 'identifier'
+                    string += self.origin[self.position]
+                    self.position += 1
+                
+                value = string.upper()
+
+                if value in reserved:
+                    type = value
+                    value = 'reserved'
+
+            elif self.origin[self.position] == '+':
+                type = 'PLUS'
+                value = '+'
                 self.position += 1
-                int_flag = True
 
-            if not int_flag:
+            elif self.origin[self.position] == '-':
+                type = 'MINUS'
+                value = '-'
+                self.position += 1
 
-                if self.origin[self.position] == '+':
-                    type = 'PLUS'
-                    value = '+'
-                    self.position += 1
+            elif self.origin[self.position] == '*':
+                type = 'MULT'
+                value = '*'
+                self.position += 1
 
-                elif self.origin[self.position] == '-':
-                    type = 'MINUS'
-                    value = '-'
-                    self.position += 1
-
-                elif self.origin[self.position] == '*':
-                    type = 'MULT'
-                    value = '*'
-                    self.position += 1
-
-                elif self.origin[self.position] == '/':
-                    type = 'DIV'
-                    value = '/'
-                    self.position += 1
-                elif self.origin[self.position] == ')':
-                    type = ')'
-                    value = ')'
-                    self.position +=1
-                elif self.origin[self.position] == '(':
-                    type = '('
-                    value = '('
-                    self.position +=1
-                else:
-                    raise SyntaxError("Invalid Sentence")
-        if int_flag:
-            self.actual = Token(type, str(int_token))
-            return self.actual
-        else:
-            self.actual = Token(type, str(value))
-            return self.actual
+            elif self.origin[self.position] == '/':
+                type = 'DIV'
+                value = '/'
+                self.position += 1
+            elif self.origin[self.position] == ')':
+                type = ')'
+                value = ')'
+                self.position +=1
+            elif self.origin[self.position] == '(':
+                type = '('
+                value = '('
+                self.position +=1
+            elif self.origin[self.position] == '=':
+                type = '='
+                value = '='
+                self.position +=1
+            elif ord(self.origin[self.position]) == 10:
+                type = 'EOL'
+                value = '\n'
+                self.position +=1
+            else:
+                raise SyntaxError("Invalid Sentence")
+        
+        self.actual = Token(type, str(value))
+        return self.actual
 
 
 class Parser():
+
+    def statements():
+        statement_children = []
+
+        if Parser.tokens.actual.type == 'BEGIN':
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'EOL':
+                Parser.tokens.selectNext()
+                while Parser.tokens.actual.type != 'END':
+                    statement_children.append(Parser.statement())
+                    if Parser.tokens.actual.type == 'EOL':
+                        Parser.tokens.selectNext()
+                    else:
+                        raise SyntaxError("Missing End of Line - after code")
+                if Parser.tokens.actual.type == 'END':
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == 'EOL':
+                        Parser.tokens.selectNext()
+                        return Statements('statements', statement_children)
+                    else:
+                        raise SyntaxError("Missing End of Line - after end")
+                else:
+                    raise SyntaxError("Missing End")
+            else:
+                raise SyntaxError("Missing End of Line - after begin")
+        else:
+            raise SyntaxError("Missing Begin")
+    
+    def statement():
+        if Parser.tokens.actual.type == 'identifier':
+            identifier = Identifier(Parser.tokens.actual.value, [])
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == '=':
+                Parser.tokens.selectNext()
+                return Assignment('=', [identifier, Parser.parseExpression()])
+        elif Parser.tokens.actual.type == 'PRINT':
+                Parser.tokens.selectNext()
+                return Print('print', [Parser.parseExpression()])
+        elif Parser.tokens.actual.type == 'BEGIN':
+                return Parser.statements()
+        else:
+                return NoOp(None, None)
+
 
     def parseExpression():
         
@@ -240,15 +346,21 @@ class Parser():
                 Parser.tokens.selectNext()
                 return UnOp('-',[Parser.fator()])
             else:
-                raise TypeError("Invalid Token Error (should have gotten INT): ", new_token.type)
+                raise TypeError("Invalid Token Error: ", new_token.type)
 
-        #cheeck if token is a number
+        # check if token is a number
         elif new_token.type == "INT":
             left = IntVal(new_token.value, [])
             Parser.tokens.selectNext()
             return left
 
-        #check if token is parentesis
+        # check if token is a variable
+        elif new_token.type == 'identifier':
+            left = Identifier(new_token.value, [])
+            Parser.tokens.selectNext()
+            return left
+            
+        # check if token is parentesis
         elif new_token.type == "(":
             Parser.tokens.selectNext()
             left = Parser.parseExpression()
@@ -264,7 +376,7 @@ class Parser():
     @staticmethod
     def run(code):
         Parser.tokens = Tokenizer(code)
-        result =  Parser.parseExpression()
+        result =  Parser.statements()
         if Parser.tokens.actual.type == 'EOF':
             return result
         else:
@@ -272,8 +384,12 @@ class Parser():
 
 
 if __name__ == '__main__':
-    print("Your input: ")
-    text = input()
-    code = PrePro.filter(text)
+
+    with open('teste.txt', 'r') as file:
+        text = file.read()
+
+    replace_inline_comment = text.replace('\\n', '\n')
+    code = PrePro.filter(replace_inline_comment)
     res = Parser.run(code)
-    print(res.Evaluate())
+    ST = SymbolTable()
+    res.Evaluate(ST)
