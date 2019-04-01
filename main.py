@@ -70,7 +70,7 @@ class UnOp(Node):
         else:
             print("master blaster error")
 
-class Statements():
+class Statements(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
