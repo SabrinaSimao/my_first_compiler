@@ -1,4 +1,6 @@
-reserved = ['PRINT', 'BEGIN', 'END']
+import sys
+
+reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN']
 
 class PrePro():
 
@@ -67,6 +69,8 @@ class UnOp(Node):
             return self.children[0].Evaluate(ST)
         elif self.value == '-':
             return -self.children[0].Evaluate(ST)
+        elif self.value == '~':
+            return ~self.children[0].Evaluate(ST)
         else:
             print("master blaster error")
 
@@ -102,6 +106,16 @@ class BinOp(Node):
             return (self.children[0].Evaluate(ST) * self.children[1].Evaluate(ST))
         elif self.value == '/':
             return (self.children[0].Evaluate(ST) // self.children[1].Evaluate(ST))
+        elif self.value == '=':
+            return (self.children[0].Evaluate(ST) == self.children[1].Evaluate(ST))
+        elif self.value == '>':
+            return (self.children[0].Evaluate(ST) > self.children[1].Evaluate(ST))
+        elif self.value == '<':
+            return (self.children[0].Evaluate(ST) < self.children[1].Evaluate(ST))
+        elif self.value == 'OR':
+            return (self.children[0].Evaluate(ST) or self.children[1].Evaluate(ST))
+        elif self.value == 'AND':
+            return (self.children[0].Evaluate(ST) and self.children[1].Evaluate(ST))
         else:
             print("master blaster error")
 
@@ -123,6 +137,20 @@ class Identifier(Node):
     def Evaluate(self, ST):
         return ST.getter(self.value)
 
+class Input(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self, ST):
+        try:
+            res = int(input())
+        except:
+            raise ValueError("input value must be a number")
+            
+        return res
+
 class NoOp(Node):
     def __init__(self, value, children):
         self.value = value
@@ -131,6 +159,31 @@ class NoOp(Node):
     
     def Evaluate(self, ST):
         pass
+
+class IF(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self, ST):
+        if self.children[0].Evaluate(ST):
+            self.children[1].Evaluate(ST)
+        elif len(self.children) == 3:
+            self.children[2].Evaluate(ST)
+        else:
+            pass
+
+class WHILE(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self, ST):
+        while self.children[0].Evaluate(ST):
+            self.children[1].Evaluate(ST)
+
 
 class Token():
 
@@ -216,6 +269,15 @@ class Tokenizer():
                 type = '='
                 value = '='
                 self.position +=1
+            elif self.origin[self.position] == '>':
+                type = '>'
+                value = '>'
+                self.position +=1
+            elif self.origin[self.position] == '<':
+                type = '<'
+                value = '<'
+                self.position +=1
+
             elif ord(self.origin[self.position]) == 10:
                 type = 'EOL'
                 value = '\n'
@@ -230,31 +292,13 @@ class Tokenizer():
 class Parser():
 
     def statements():
-        statement_children = []
+        node = Statements('sta', [Parser.statement()])
 
-        if Parser.tokens.actual.type == 'BEGIN':
+        while Parser.tokens.actual.type == 'EOL':
             Parser.tokens.selectNext()
-            if Parser.tokens.actual.type == 'EOL':
-                Parser.tokens.selectNext()
-                while Parser.tokens.actual.type != 'END':
-                    statement_children.append(Parser.statement())
-                    if Parser.tokens.actual.type == 'EOL':
-                        Parser.tokens.selectNext()
-                    else:
-                        raise SyntaxError("Missing End of Line - after code")
-                if Parser.tokens.actual.type == 'END':
-                    Parser.tokens.selectNext()
-                    if Parser.tokens.actual.type == 'EOL':
-                        Parser.tokens.selectNext()
-                        return Statements('statements', statement_children)
-                    else:
-                        raise SyntaxError("Missing End of Line - after end")
-                else:
-                    raise SyntaxError("Missing End")
-            else:
-                raise SyntaxError("Missing End of Line - after begin")
-        else:
-            raise SyntaxError("Missing Begin")
+            node.children.append(Parser.statement())
+        
+        return node
     
     def statement():
         if Parser.tokens.actual.type == 'identifier':
@@ -266,10 +310,40 @@ class Parser():
         elif Parser.tokens.actual.type == 'PRINT':
                 Parser.tokens.selectNext()
                 return Print('print', [Parser.parseExpression()])
-        elif Parser.tokens.actual.type == 'BEGIN':
-                return Parser.statements()
+        elif Parser.tokens.actual.type == 'WHILE':
+                Parser.tokens.selectNext()
+                tmp_node = WHILE('WHILE', [Parser.relExpression(), Parser.statements()])
+                if Parser.tokens.actual.type == 'WEND':
+                    Parser.tokens.selectNext()
+                    return tmp_node
+                else:
+                    raise SyntaxError("Missing WEND token")
+        elif Parser.tokens.actual.type == 'IF':
+                Parser.tokens.selectNext()
+                left = Parser.relExpression()
+                if Parser.tokens.actual.type == 'THEN':
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == 'EOL':
+                        Parser.tokens.selectNext()
+                        tmp_node = IF('IF', [left, Parser.statements()])
+                        if Parser.tokens.actual.type == 'ELSE':
+                            Parser.tokens.selectNext()
+                            tmp_node.children.append(Parser.statements())
+                        if Parser.tokens.actual.type == 'END':
+                            Parser.tokens.selectNext()
+                            if Parser.tokens.actual.type == 'IF':
+                                Parser.tokens.selectNext()
+                                return tmp_node
+                            else:
+                                raise SyntaxError("Missing IF token - end of IF statement")
+                        else:
+                            raise SyntaxError("Missing END token - IF statement")
+                    else:
+                        raise SyntaxError("Missing End of Line after Then - IF statement")
+                else:
+                    raise SyntaxError("Missing THEN token - IF statement")
         else:
-                return NoOp(None, None)
+            return NoOp(None, None)
 
 
     def parseExpression():
@@ -277,7 +351,7 @@ class Parser():
        
         left = Parser.termo()
 
-        while Parser.tokens.actual.type == 'PLUS' or Parser.tokens.actual.type == 'MINUS':
+        while Parser.tokens.actual.type == 'PLUS' or Parser.tokens.actual.type == 'MINUS' or Parser.tokens.actual.type == 'OR':
              # if actual token is +
             if Parser.tokens.actual.type == 'PLUS':
 
@@ -296,6 +370,14 @@ class Parser():
 
                 left = BinOp('-', [left, right])
 
+            elif Parser.tokens.actual.type == 'OR':
+                
+                Parser.tokens.selectNext()
+                
+                right = Parser.termo()
+
+                left = BinOp('or', [left, right])
+
             else:
                 print("ultimate super master error")
             # end of while
@@ -306,8 +388,8 @@ class Parser():
 
         left = Parser.fator()
 
-        while Parser.tokens.actual.type == 'MULT' or Parser.tokens.actual.type == 'DIV':
-            # if actual token is +
+        while Parser.tokens.actual.type == 'MULT' or Parser.tokens.actual.type == 'DIV' or Parser.tokens.actual.type == 'AND':
+
             if Parser.tokens.actual.type == 'MULT':
 
                 Parser.tokens.selectNext()
@@ -316,7 +398,6 @@ class Parser():
 
                 left = BinOp('*', [left, right])
 
-            # if actual token is -
             elif Parser.tokens.actual.type == 'DIV':
                 
                 Parser.tokens.selectNext()
@@ -325,18 +406,60 @@ class Parser():
                 
                 left = BinOp('/', [left, right])
 
+            elif Parser.tokens.actual.type == 'AND':
+                
+                Parser.tokens.selectNext()
+                
+                right = Parser.fator()
+                
+                left = BinOp('and', [left, right])
+
             else:
                 print("ultimate super master error")
-            # end of while
 
         return left
+
+
+    def relExpression():
+
+        left = Parser.parseExpression()
+
+        if Parser.tokens.actual.type == '=':
+
+            Parser.tokens.selectNext()
+            
+            right = Parser.parseExpression()
+
+            left = BinOp('=', [left, right])
+
+        elif Parser.tokens.actual.type == '>':
+            
+            Parser.tokens.selectNext()
+            
+            right = Parser.parseExpression()
+            
+            left = BinOp('>', [left, right])
+
+        elif Parser.tokens.actual.type == '<':
+            
+            Parser.tokens.selectNext()
+            
+            right = Parser.parseExpression()
+            
+            left = BinOp('<', [left, right])
+
+        else:
+            print("ultimate super master error")
+
+        return left
+
 
     def fator():
 
         new_token = Parser.tokens.actual
 
         # check if token is unary operator
-        if(new_token.type == "PLUS" or new_token.type == "MINUS"):
+        if(new_token.type == "PLUS" or new_token.type == "MINUS" or new_token.type == "NOT"):
             if(new_token.type == "PLUS"):
                 
                 Parser.tokens.selectNext()
@@ -345,6 +468,11 @@ class Parser():
             elif(new_token.type == "MINUS"):
                 Parser.tokens.selectNext()
                 return UnOp('-',[Parser.fator()])
+
+            elif(new_token.type == "NOT"):
+                Parser.tokens.selectNext()
+                return UnOp('~',[Parser.fator()])
+                
             else:
                 raise TypeError("Invalid Token Error: ", new_token.type)
 
@@ -357,6 +485,11 @@ class Parser():
         # check if token is a variable
         elif new_token.type == 'identifier':
             left = Identifier(new_token.value, [])
+            Parser.tokens.selectNext()
+            return left
+
+        elif new_token.type == 'INPUT':
+            left = Input('input', [])
             Parser.tokens.selectNext()
             return left
             
@@ -385,8 +518,9 @@ class Parser():
 
 if __name__ == '__main__':
 
-    with open('teste.txt', 'r') as file:
-        text = file.read()
+    if len(sys.argv) == 2:
+        with open(sys.argv[1], 'r') as file:
+            text = file.read()
 
     replace_inline_comment = text.replace('\\n', '\n')
     code = PrePro.filter(replace_inline_comment)
