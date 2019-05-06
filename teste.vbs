@@ -25,13 +25,13 @@ else
     end if
 end if
 
-a = 0
-b = 10
-while a < b
-while a < 3
-print Fizz
-a = a + 1
-wend
-a = a + 1
-print Buzz
-wend
+'a = 0
+'b = 10
+'while a < b
+'while a < 3
+'print Fizz
+'a = a + 1
+'wend
+'a = a + 1
+'print Buzz
+'wend

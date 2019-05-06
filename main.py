@@ -1,6 +1,6 @@
 import sys
 
-reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN']
+reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN', 'SUB', 'MAIN', 'INTEGER', 'BOOLEAN', 'DIM', 'AS']
 
 class PrePro():
 
@@ -291,57 +291,143 @@ class Tokenizer():
 
 class Parser():
 
-    def statements():
+    def program():
         node = Statements('sta', [Parser.statement()])
-
-        while Parser.tokens.actual.type == 'EOL':
+         if Parser.tokens.actual.type == 'SUB':
             Parser.tokens.selectNext()
-            node.children.append(Parser.statement())
-        
+            if Parser.tokens.actual.type == 'MAIN':
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == '(':
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == ')':
+                        Parser.tokens.selectNext()
+                        if Parser.tokens.actual.type == 'EOL':
+                            Parser.tokens.selectNext()
+                            while Parser.tokens.actual.type != 'END':
+                                Parser.tokens.selectNext()
+                                node.children.append(Parser.statement())
+                                if Parser.tokens.actual.type != 'EOL':
+                                    raise SyntaxError("Missing End of Line after statement - program block")
+                                else:
+                                    Parser.tokens.selectNext()
+                            if Parser.tokens.actual.type == 'END':
+                                Parser.tokens.selectNext()
+                                if Parser.tokens.actual.type == 'SUB': 
+                                    Parser.tokens.selectNext()
+                                    while Parser.tokens.actual.type == 'EOL':
+                                        Parser.tokens.selectNext()
+                                else:
+                                    raise SyntaxError("Missing last SUB Statement - program block")
+                            else:
+                                raise SyntaxError("Missing End Statement - program block")
+                        else:
+                                raise SyntaxError("Missing EOL Statement - program block")
+                    else:
+                                raise SyntaxError("Missing ) Statement - program block")
+                else:
+                                raise SyntaxError("Missing ( Statement - program block")
+            else:
+                                raise SyntaxError("Missing MAIN Statement - program block")
+        else:
+                                raise SyntaxError("Missing first SUB Statement - program block")
         return node
     
     def statement():
+
+        # identifier
         if Parser.tokens.actual.type == 'identifier':
             identifier = Identifier(Parser.tokens.actual.value, [])
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == '=':
                 Parser.tokens.selectNext()
-                return Assignment('=', [identifier, Parser.parseExpression()])
+                return Assignment('=', [identifier, Parser.relExpression()])
+        
+        # print
         elif Parser.tokens.actual.type == 'PRINT':
                 Parser.tokens.selectNext()
                 return Print('print', [Parser.parseExpression()])
+
+        # dim
+        elif Parser.tokens.actual.type == 'DIM':
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'identifier':
+                value = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == 'AS':
+                    Parser.tokens.selectNext()
+                    return VarDec([Identifier('id', value), Parser.Type()])
+                else:
+                    raise SyntaxError("Missing AS token - DIM statement")
+            else:
+                raise SyntaxError("Missing identifier token - DIM statement
+
+        # while
         elif Parser.tokens.actual.type == 'WHILE':
                 Parser.tokens.selectNext()
-                tmp_node = WHILE('WHILE', [Parser.relExpression(), Parser.statements()])
-                if Parser.tokens.actual.type == 'WEND':
+                relExp = Parser.relExpression()
+                if Parser.tokens.actual.type == 'EOL':
                     Parser.tokens.selectNext()
-                    return tmp_node
                 else:
-                    raise SyntaxError("Missing WEND token")
+                    raise SyntaxError("Missing EOL token - after relExpression")
+                tmp_node_list = []
+                while(Parser.tokens.actual.type != 'WEND'):
+                    tmp_node_list.append(Parser.statement())
+                    if Parser.tokens.actual.type == 'EOL':
+                        Parser.tokens.selectNext()
+                    else:
+                        raise SyntaxError("Missing EOL token - after while statement")
+                Parser.tokens.selectNext()
+                return WHILE('WHILE', [relExp, Statements('Sta', tmp_node_list)])
+
+        # if
         elif Parser.tokens.actual.type == 'IF':
                 Parser.tokens.selectNext()
-                left = Parser.relExpression()
+                if_childrens = [Parser.relExpression()]
                 if Parser.tokens.actual.type == 'THEN':
                     Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'EOL':
                         Parser.tokens.selectNext()
-                        tmp_node = IF('IF', [left, Parser.statements()])
-                        if Parser.tokens.actual.type == 'ELSE':
-                            Parser.tokens.selectNext()
-                            tmp_node.children.append(Parser.statements())
-                        if Parser.tokens.actual.type == 'END':
-                            Parser.tokens.selectNext()
-                            if Parser.tokens.actual.type == 'IF':
+                        tmp_node_if = []
+                        while(Parser.tokens.actual.type not in ['END', 'ELSE']):
+                            tmp_node_if.append(Parser.statement())
+                            if Parser.tokens.actual.type == 'EOL':
                                 Parser.tokens.selectNext()
-                                return tmp_node
                             else:
-                                raise SyntaxError("Missing IF token - end of IF statement")
+                                raise SyntaxError("Missing End of Line after statement - IF statement")
+
+                        if_childrens.append(Statements("Sta", tmp_node_if))
+
+                        if Parser.tokens.actual.type == 'ELSE':
+                            tmp_node_else = []
+                            Parser.tokens.selectNext()
+                            
+                            if Parser.tokens.actual.type == 'EOL':
+                                Parser.tokens.selectNext()
+                            else:
+                                raise SyntaxError("Missing End of Line after else - IF statement")                            
+                            while(Parser.tokens.actual.type != 'END'):
+                                tmp_node_else.append(Parser.statement())
+                                if Parser.tokens.actual.type == 'EOL':
+                                    Parser.tokens.selectNext()
+                                else:
+                                    raise SyntaxError("Missing End of Line after else statement - IF statement")
+
+                            if_childrens.append(Statements("Sta", tmp_node_else))
+                        
+                        Parser.tokens.selectNext()
+                        if Parser.tokens.actual.type == 'IF':
+                            Parser.tokens.selectNext()
+                            return IF("IF", if_childrens)
+                        else:
+                            raise SyntaxError("Missing IF token - end of IF statement")
                         else:
                             raise SyntaxError("Missing END token - IF statement")
                     else:
                         raise SyntaxError("Missing End of Line after Then - IF statement")
                 else:
                     raise SyntaxError("Missing THEN token - IF statement")
+        
+        # no op
         else:
             return NoOp(None, None)
 
