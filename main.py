@@ -630,10 +630,11 @@ class Parser():
 
     def tipo():
         if Parser.tokens.actual.type in ['INTEGER', 'BOOLEAN']:
+            tipo = Parser.tokens.actual.type
             Parser.tokens.selectNext()
-            return Tipo(Parser.tokens.actual.type, [])
+            return Tipo(tipo, [])
         else:
-            raise SyntaxError("Variable type unknown: ", Parser.tokens.actual.type)
+            raise SyntaxError("Variable type unknown: ", tipo)
 
     @staticmethod
     def run(code):
