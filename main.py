@@ -58,7 +58,7 @@ class Assignment(Node):
         tipo = ST.getter(self.children[0].value)[1]
 
         f1 = self.children[1].Evaluate(ST)
-
+        
         if f1 in ['TRUE', 'FALSE']:
             if tipo != 'BOOLEAN':
                 raise ValueError("Incorrect type assignment: ", tipo)
@@ -600,7 +600,7 @@ class Parser():
 
         # check if token is a boolean
         elif new_token.type in ['TRUE', 'FALSE']:
-            left = BoolVal(new_token.value, [])
+            left = BoolVal(new_token.type, [])
             Parser.tokens.selectNext()
             return left
 
