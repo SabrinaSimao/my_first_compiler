@@ -1,6 +1,6 @@
 import sys
 
-reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN', 'SUB', 'MAIN', 'INTEGER', 'BOOLEAN', 'DIM', 'AS']
+reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN', 'SUB', 'MAIN', 'INTEGER', 'BOOLEAN', 'DIM', 'AS', 'TRUE', 'FALSE']
 
 class PrePro():
 
@@ -37,8 +37,8 @@ class SymbolTable():
         else:
             raise ValueError("Variable does not exist", index)
 
-    def setter(self, index, value):
-        self.dic[index] = value
+    def setter(self, index, value, tipo):
+        self.dic[index] = [value, tipo]
 
 class Node():
     def __init__(self, value, children):
@@ -55,8 +55,25 @@ class Assignment(Node):
 
     
     def Evaluate(self, ST):
-        ST.setter(self.children[0].value, self.children[1].Evaluate(ST))
+        tipo = ST.getter(self.children[0].value)[1]
 
+        f1 = self.children[1].Evaluate(ST)
+
+        if f1 in ['TRUE', 'FALSE']:
+            if tipo != 'BOOLEAN':
+                raise ValueError("Incorrect type assignment: ", tipo)
+        else:
+            if tipo == 'BOOLEAN':
+                raise ValueError("Incorrect type assignment: ", f1)
+
+        if isinstance(f1, int):
+            if tipo != 'INTEGER':
+                raise ValueError("Incorrect type assignment: ", tipo)
+        else:
+            if tipo == 'INTEGER':
+                raise ValueError("Incorrect type assignment: ", f1)
+
+        ST.setter(self.children[0].value, f1, tipo)
 
 class UnOp(Node):
     def __init__(self, value, children):
@@ -128,6 +145,15 @@ class IntVal(Node):
     def Evaluate(self, ST):
         return int(self.value)
 
+class BoolVal(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    
+    def Evaluate(self, ST):
+        return self.value
+
 class Identifier(Node):
     def __init__(self, value, children):
         self.value = value
@@ -135,7 +161,7 @@ class Identifier(Node):
 
     
     def Evaluate(self, ST):
-        return ST.getter(self.value)
+        return self.value
 
 class Input(Node):
     def __init__(self, value, children):
@@ -184,6 +210,27 @@ class WHILE(Node):
         while self.children[0].Evaluate(ST):
             self.children[1].Evaluate(ST)
 
+class Tipo(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    def Evaluate(self, ST):
+        return self.value
+
+class VarDec(Node):
+    def __init__(self, value, children):
+        self.value = value
+        self.children = children
+
+    def Evaluate(self, ST):
+        #if self.children[0].Evaluate in ST:
+        #    raise ValueError("VARIABLE WAS ALREADY DECLARED", self.children[0])
+            
+        #else:
+        f0 = self.children[0].Evaluate(ST)
+        f1 = self.children[1].Evaluate(ST)
+        ST.setter(f0, None, f1)
 
 class Token():
 
@@ -293,7 +340,7 @@ class Parser():
 
     def program():
         node = Statements('sta', [Parser.statement()])
-         if Parser.tokens.actual.type == 'SUB':
+        if Parser.tokens.actual.type == 'SUB':
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'MAIN':
                 Parser.tokens.selectNext()
@@ -303,35 +350,37 @@ class Parser():
                         Parser.tokens.selectNext()
                         if Parser.tokens.actual.type == 'EOL':
                             Parser.tokens.selectNext()
+                            tmp_program_list = []
+                            
                             while Parser.tokens.actual.type != 'END':
-                                Parser.tokens.selectNext()
-                                node.children.append(Parser.statement())
+                                tmp_program_list.append(Parser.statement())
                                 if Parser.tokens.actual.type != 'EOL':
                                     raise SyntaxError("Missing End of Line after statement - program block")
                                 else:
                                     Parser.tokens.selectNext()
-                            if Parser.tokens.actual.type == 'END':
+                            
+                            Parser.tokens.selectNext()
+
+                            if Parser.tokens.actual.type == 'SUB': 
                                 Parser.tokens.selectNext()
-                                if Parser.tokens.actual.type == 'SUB': 
+                                while Parser.tokens.actual.type == 'EOL':
                                     Parser.tokens.selectNext()
-                                    while Parser.tokens.actual.type == 'EOL':
-                                        Parser.tokens.selectNext()
-                                else:
-                                    raise SyntaxError("Missing last SUB Statement - program block")
+                                return Statements('Sta', tmp_program_list)
                             else:
-                                raise SyntaxError("Missing End Statement - program block")
+                                raise SyntaxError("Missing last SUB Statement - program block")
                         else:
-                                raise SyntaxError("Missing EOL Statement - program block")
+                            raise SyntaxError("Missing EOL Statement - program block")
                     else:
-                                raise SyntaxError("Missing ) Statement - program block")
+                        raise SyntaxError("Missing ) Statement - program block")
                 else:
-                                raise SyntaxError("Missing ( Statement - program block")
+                    raise SyntaxError("Missing ( Statement - program block")
             else:
-                                raise SyntaxError("Missing MAIN Statement - program block")
+                raise SyntaxError("Missing MAIN Statement - program block")
         else:
-                                raise SyntaxError("Missing first SUB Statement - program block")
+            raise SyntaxError("Missing first SUB Statement - program block")
         return node
     
+
     def statement():
 
         # identifier
@@ -355,11 +404,11 @@ class Parser():
                 Parser.tokens.selectNext()
                 if Parser.tokens.actual.type == 'AS':
                     Parser.tokens.selectNext()
-                    return VarDec([Identifier('id', value), Parser.Type()])
+                    return VarDec('VarDec', [Identifier(value, []), Parser.tipo()])
                 else:
                     raise SyntaxError("Missing AS token - DIM statement")
             else:
-                raise SyntaxError("Missing identifier token - DIM statement
+                raise SyntaxError("Missing identifier token - DIM statement")
 
         # while
         elif Parser.tokens.actual.type == 'WHILE':
@@ -420,8 +469,6 @@ class Parser():
                             return IF("IF", if_childrens)
                         else:
                             raise SyntaxError("Missing IF token - end of IF statement")
-                        else:
-                            raise SyntaxError("Missing END token - IF statement")
                     else:
                         raise SyntaxError("Missing End of Line after Then - IF statement")
                 else:
@@ -470,6 +517,7 @@ class Parser():
 
         return left
 
+
     def termo():
 
         left = Parser.fator()
@@ -510,35 +558,17 @@ class Parser():
 
         left = Parser.parseExpression()
 
-        if Parser.tokens.actual.type == '=':
+        if (Parser.tokens.actual.type in ['=', '>', '<']):
 
             Parser.tokens.selectNext()
-            
+
             right = Parser.parseExpression()
 
-            left = BinOp('=', [left, right])
-
-        elif Parser.tokens.actual.type == '>':
-            
-            Parser.tokens.selectNext()
-            
-            right = Parser.parseExpression()
-            
-            left = BinOp('>', [left, right])
-
-        elif Parser.tokens.actual.type == '<':
-            
-            Parser.tokens.selectNext()
-            
-            right = Parser.parseExpression()
-            
-            left = BinOp('<', [left, right])
+            return BinOp(Parser.tokens.actual.type, [left, right])
 
         else:
-            print("ultimate super master error")
-
-        return left
-
+            return left
+        
 
     def fator():
 
@@ -568,6 +598,12 @@ class Parser():
             Parser.tokens.selectNext()
             return left
 
+        # check if token is a boolean
+        elif new_token.type in ['TRUE', 'FALSE']:
+            left = BoolVal(new_token.value, [])
+            Parser.tokens.selectNext()
+            return left
+
         # check if token is a variable
         elif new_token.type == 'identifier':
             left = Identifier(new_token.value, [])
@@ -592,10 +628,17 @@ class Parser():
         else:
             raise SyntaxError("Invalid Token - Sentence should start with number, parentesis or operator (+,-): ", new_token.type)
 
+    def tipo():
+        if Parser.tokens.actual.type in ['INTEGER', 'BOOLEAN']:
+            Parser.tokens.selectNext()
+            return Tipo(Parser.tokens.actual.type, [])
+        else:
+            raise SyntaxError("Variable type unknown: ", Parser.tokens.actual.type)
+
     @staticmethod
     def run(code):
         Parser.tokens = Tokenizer(code)
-        result =  Parser.statements()
+        result =  Parser.program()
         if Parser.tokens.actual.type == 'EOF':
             return result
         else:
