@@ -428,6 +428,10 @@ class Parser():
         elif Parser.tokens.actual.type == 'WHILE':
                 Parser.tokens.selectNext()
                 relExp = Parser.relExpression()
+                if Parser.tokens.actual.type == 'THEN':
+                    Parser.tokens.selectNext()
+                else:
+                    raise SyntaxError("Missing Then token - While statement")
                 if Parser.tokens.actual.type == 'EOL':
                     Parser.tokens.selectNext()
                 else:
