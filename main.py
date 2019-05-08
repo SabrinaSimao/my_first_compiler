@@ -106,33 +106,47 @@ class Print(Node):
         self.children = children
     
     def Evaluate(self, ST):
-        print(self.children[0].Evaluate(ST))
+        f = self.children[0].Evaluate(ST)
+        if isinstance(f,str):
+            value, tipo = ST.getter(f)
+            print(value)
+        else:
+            print(f)
 
 class BinOp(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-
     
     def Evaluate(self, ST):
+
+        f0 = self.children[0].Evaluate(ST)
+        f1 = self.children[1].Evaluate(ST)
+
+        if isinstance(f0,str):
+            f0, t0 = ST.getter(f0)
+
+        if isinstance(f1,str):
+            f1, t0 = ST.getter(f1)
+
         if self.value == '+':
-            return (self.children[0].Evaluate(ST) + self.children[1].Evaluate(ST))
+            return (f0 + f1)
         elif self.value == '-':
-            return (self.children[0].Evaluate(ST) - self.children[1].Evaluate(ST))
+            return (f0 - f1)
         elif self.value == '*':
-            return (self.children[0].Evaluate(ST) * self.children[1].Evaluate(ST))
+            return (f0 * f1)
         elif self.value == '/':
-            return (self.children[0].Evaluate(ST) // self.children[1].Evaluate(ST))
+            return (f0 // f1)
         elif self.value == '=':
-            return (self.children[0].Evaluate(ST) == self.children[1].Evaluate(ST))
+            return (f0 == f1)
         elif self.value == '>':
-            return (self.children[0].Evaluate(ST) > self.children[1].Evaluate(ST))
+            return (f0 > f1)
         elif self.value == '<':
-            return (self.children[0].Evaluate(ST) < self.children[1].Evaluate(ST))
+            return (f0 < f1)
         elif self.value == 'OR':
-            return (self.children[0].Evaluate(ST) or self.children[1].Evaluate(ST))
+            return (f0 or f1)
         elif self.value == 'AND':
-            return (self.children[0].Evaluate(ST) and self.children[1].Evaluate(ST))
+            return (f0 and f1)
         else:
             print("master blaster error")
 
@@ -443,9 +457,8 @@ class Parser():
                                 Parser.tokens.selectNext()
                             else:
                                 raise SyntaxError("Missing End of Line after statement - IF statement")
-
+                        
                         if_childrens.append(Statements("Sta", tmp_node_if))
-
                         if Parser.tokens.actual.type == 'ELSE':
                             tmp_node_else = []
                             Parser.tokens.selectNext()
@@ -559,12 +572,12 @@ class Parser():
         left = Parser.parseExpression()
 
         if (Parser.tokens.actual.type in ['=', '>', '<']):
-
+            bin_op = Parser.tokens.actual.type
             Parser.tokens.selectNext()
 
             right = Parser.parseExpression()
-
-            return BinOp(Parser.tokens.actual.type, [left, right])
+            
+            return BinOp(bin_op, [left, right])
 
         else:
             return left

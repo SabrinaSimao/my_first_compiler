@@ -1,3 +1,11 @@
+Sub Main()
+dim fizz as integer
+dim buzz as integer
+dim fizzbuzz as integer
+dim n as integer
+dim tres as integer
+dim cinco as integer
+
 n = INPUT
 Fizz = 7155
 Buzz = 8055
@@ -25,13 +33,4 @@ else
     end if
 end if
 
-'a = 0
-'b = 10
-'while a < b
-'while a < 3
-'print Fizz
-'a = a + 1
-'wend
-'a = a + 1
-'print Buzz
-'wend
+end sub

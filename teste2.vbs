@@ -1,4 +1,4 @@
 Sub Main()
-    DIM jujuba AS INTEGER
-    jujuba = 3
+    DIM flag as boolean
+    FLAG = TRUE
 End Sub
