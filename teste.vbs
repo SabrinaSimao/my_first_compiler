@@ -5,11 +5,13 @@ dim fizzbuzz as integer
 dim n as integer
 dim tres as integer
 dim cinco as integer
+dim teste as integer
 
 n = INPUT
 Fizz = 7155
 Buzz = 8055
 FizzBuzz = 71558055
+teste = 7
 
 tres = (n - (n / 3 * 3))
 cinco = (n - (n / 5 * 5))
@@ -32,5 +34,11 @@ else
         end if
     end if
 end if
+
+While teste < 40 then
+
+    print teste
+    teste = teste + 10
+Wend
 
 end sub
