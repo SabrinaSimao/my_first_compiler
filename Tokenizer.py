@@ -43,11 +43,11 @@ class Tokenizer():
                     self.position += 1
 
             elif self.origin[self.position].isalpha():
-                while self.position < len(self.origin) and self.origin[self.position].isalpha():
+                while self.position < len(self.origin) and (self.origin[self.position].isalpha() or self.origin[self.position].isdigit() or self.origin[self.position] == "_"):
                     type = 'identifier'
                     string += self.origin[self.position]
                     self.position += 1
-                
+                    
                 value = string.upper()
 
                 if value in reserved:

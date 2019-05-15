@@ -4,6 +4,7 @@ from Parser import *
 class SymbolTable():
     def __init__(self):
         self.dic = {}
+        self.shift = 0
 
     def getter(self, index):
         if index in self.dic:
@@ -12,7 +13,20 @@ class SymbolTable():
             raise ValueError("Variable does not exist", index)
 
     def setter(self, index, value, tipo):
-        self.dic[index] = [value, tipo]
+        if index not in self.dic:
+            #erro var not declared
+            pass
+        else:
+            self.dic[index][0] = value
+
+
+    def creator(self, index, value, tipo):
+        if index in self.dic:
+            #erro var duplicada
+            pass
+        else:
+            self.shift -=4
+            self.dic[index] = [None, tipo, self.shift]
 
 
 if __name__ == '__main__':

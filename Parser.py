@@ -66,11 +66,11 @@ class Parser():
         elif Parser.tokens.actual.type == 'DIM':
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'identifier':
-                value = Parser.tokens.actual.value
+                identifier = nd.Identifier(Parser.tokens.actual.value, [])
                 Parser.tokens.selectNext()
                 if Parser.tokens.actual.type == 'AS':
                     Parser.tokens.selectNext()
-                    return nd.VarDec('VarDec', [nd.Identifier(value, []), Parser.tipo()])
+                    return nd.VarDec('VarDec', [identifier, Parser.tipo()])
                 else:
                     raise SyntaxError("Missing AS token - DIM statement")
             else:
@@ -80,14 +80,11 @@ class Parser():
         elif Parser.tokens.actual.type == 'WHILE':
                 Parser.tokens.selectNext()
                 relExp = Parser.relExpression()
-                if Parser.tokens.actual.type == 'THEN':
-                    Parser.tokens.selectNext()
-                else:
-                    raise SyntaxError("Missing Then token - While statement")
                 if Parser.tokens.actual.type == 'EOL':
                     Parser.tokens.selectNext()
                 else:
                     raise SyntaxError("Missing EOL token - after relExpression")
+                
                 tmp_node_list = []
                 while(Parser.tokens.actual.type != 'WEND'):
                     tmp_node_list.append(Parser.statement())
@@ -96,7 +93,7 @@ class Parser():
                     else:
                         raise SyntaxError("Missing EOL token - after while statement")
                 Parser.tokens.selectNext()
-                return nd.WHILE('WHILE', [relExp, nd.Statements('Sta', tmp_node_list)])
+                return nd.WHILE('WHILE', [relExp, tmp_node_list])
 
         # if
         elif Parser.tokens.actual.type == 'IF':
@@ -215,7 +212,7 @@ class Parser():
                 
                 right = Parser.fator()
                 
-                left = nd.BinOp('and', [left, right])
+                left = nd.BinOp('AND', [left, right])
 
             else:
                 print("ultimate super master error")
@@ -287,7 +284,7 @@ class Parser():
         # check if token is parentesis
         elif new_token.type == "(":
             Parser.tokens.selectNext()
-            left = Parser.parseExpression()
+            left = Parser.relExpression()
             new_token = Parser.tokens.actual
             if new_token.type == ")":
                 Parser.tokens.selectNext()
