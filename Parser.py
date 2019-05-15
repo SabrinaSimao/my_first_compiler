@@ -111,7 +111,7 @@ class Parser():
                             else:
                                 raise SyntaxError("Missing End of Line after statement - IF statement")
                         
-                        if_childrens.append(nd.Statements("Sta", tmp_node_if))
+                        if_childrens.append(tmp_node_if)
                         if Parser.tokens.actual.type == 'ELSE':
                             tmp_node_else = []
                             Parser.tokens.selectNext()
@@ -127,7 +127,7 @@ class Parser():
                                 else:
                                     raise SyntaxError("Missing End of Line after else statement - IF statement")
 
-                            if_childrens.append(nd.Statements("Sta", tmp_node_else))
+                            if_childrens.append(tmp_node_else)
                         
                         Parser.tokens.selectNext()
                         if Parser.tokens.actual.type == 'IF':
@@ -175,7 +175,7 @@ class Parser():
                 
                 right = Parser.termo()
 
-                left = nd.BinOp('or', [left, right])
+                left = nd.BinOp('OR', [left, right])
 
             else:
                 print("ultimate super master error")

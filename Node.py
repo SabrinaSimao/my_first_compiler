@@ -47,7 +47,7 @@ class Assignment(Node):
             if f1[0] == 'INTEGER':
                 raise ValueError("Incorrect type assignment: ", f1[0])
 
-        ST.setter(self.children[0].value, f1[0], f1[1])
+        ST.setter(self.children[0].value, f1[0])
         
         Assembler.Write("MOV [EBP-{}], EBX".format(ST.getter(self.children[0].value)[2]))
 
@@ -61,7 +61,6 @@ class UnOp(Node):
     def Evaluate(self, ST):
 
         f0 = self.children[0].Evaluate(ST)
-
         if self.value == '+':
             if f0[1] == 'INTEGER':
                 Assembler.Write("MOV EAX, 1")
@@ -84,7 +83,7 @@ class UnOp(Node):
                     Assembler.Write("MOV EBX, False")
                 else:
                     Assembler.Write("MOV EBX, True")
-                return (~f0[0], 'BOOLEAN')
+                return (not f0[0], 'BOOLEAN')
             else:
                 raise ValueError("Unary operator ~ must be followed by an boolean")
         else:
@@ -263,13 +262,17 @@ class IF(Node):
     
     def Evaluate(self, ST):
         
-        if self.children[0].Evaluate(ST):
-            Assembler.Write("CMP EBX, True")
-            self.children[1].Evaluate(ST)
+        condition = self.children[0].Evaluate(ST)
+        if(condition[0] == 'TRUE' or condition[0] == True):
+            for f in self.children[1]:
+                f.Evaluate(ST)
         elif len(self.children) == 3:
-            self.children[2].Evaluate(ST)
+            for f2 in self.children[2]:
+                f2.Evaluate(ST)
         else:
             pass
+        
+        Assembler.Write("CMP EBX, True")
 
         Assembler.Write("EXIT_{self.id}")
 
@@ -280,12 +283,13 @@ class WHILE(Node):
         self.id = Node.newID()
     
     def Evaluate(self, ST):
+
         Assembler.Write("LOOP_{self.id}:")
-        f0 = self.children[0].Evaluate(ST)
         Assembler.Write("CMP EBX, False")
         Assembler.Write("JE EXIT_{self.id}")
-        for f in self.children[1]:
-            f.Evaluate(ST)
+        while (self.children[0].Evaluate(ST)[0] == True) or (self.children[0].Evaluate(ST)[0] == 'TRUE'):
+            for f in self.children[1]:
+                f.Evaluate(ST)
         Assembler.Write("JMP LOOP_{self.id}")
         Assembler.Write("EXIT_{self.id}:")
 

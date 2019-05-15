@@ -12,7 +12,7 @@ class SymbolTable():
         else:
             raise ValueError("Variable does not exist", index)
 
-    def setter(self, index, value, tipo):
+    def setter(self, index, value):
         if index not in self.dic:
             #erro var not declared
             pass
