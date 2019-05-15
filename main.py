@@ -26,7 +26,7 @@ class SymbolTable():
             #erro var duplicada
             pass
         else:
-            self.shift -=4
+            self.shift +=4
             self.dic[index] = [None, tipo, self.shift]
 
 

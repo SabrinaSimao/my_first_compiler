@@ -14,7 +14,7 @@ class Assembler():
                 for line1 in pre_code:
                     fout.write(line1)
 
-            for line2 in commands:
+            for line2 in Assembler.commands:
                 fout.write(line2 + '\n')
             
             with open("post_code.txt") as post_code:
@@ -47,22 +47,6 @@ class Assignment(Node):
     def Evaluate(self, ST):
         #this will write "mov ebx, value"
         f1 = self.children[1].Evaluate(ST)
-
-        if f1[0] in ['TRUE', 'FALSE']:
-            if f1[1] != 'BOOLEAN':
-                raise ValueError("Incorrect type assignment: ", f1[1])
-        else:
-            if f1[0] == 'BOOLEAN':
-                raise ValueError("Incorrect type assignment: ", f1[0])
-
-        if isinstance(f1[0], int):
-            if f1[1] != 'INTEGER':
-                raise ValueError("Incorrect type assignment: ", f1[1])
-        else:
-            if f1[0] == 'INTEGER':
-                raise ValueError("Incorrect type assignment: ", f1[0])
-
-        ST.setter(self.children[0].value, f1[0])
         
         Assembler.Write("MOV [EBP-{}], EBX".format(ST.getter(self.children[0].value)[2]))
 
@@ -212,7 +196,7 @@ class IntVal(Node):
         self.id = Node.newID()
     
     def Evaluate(self, ST):
-        Assembler.Write("MOV EBX, {self.value}")
+        Assembler.Write("MOV EBX, {}".format(self.value))
         #return [int(self.value), 'INTEGER']
         
 
@@ -223,7 +207,7 @@ class BoolVal(Node):
         self.id = Node.newID()
     
     def Evaluate(self, ST):
-        Assembler.Write("MOV EBX, {self.value}")
+        Assembler.Write("MOV EBX, {}".format(self.value))
         #return [self.value, 'BOOLEAN']
 
 class Identifier(Node):
