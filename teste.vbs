@@ -1,36 +1,42 @@
-Sub Main()
-dim fizz as integer
-dim buzz as integer
-dim fizzbuzz as integer
-dim n as integer
-dim tres as integer
-dim cinco as integer
+Sub main()
+    ' adaptado da sabrina
 
-n = INPUT
-Fizz = 7155
-Buzz = 8055
-FizzBuzz = 71558055
+    dim fizz as integer
+    dim buzz as integer
+    dim fizzbuzz as integer
+    dim n as integer
+    dim tres as integer
+    dim cinco as integer
+    dim flag as boolean
 
-tres = (n - (n / 3 * 3))
-cinco = (n - (n / 5 * 5))
+    n = INPUT
+    fizz = 0000
+    buzz = 1111
+    fizzbuzz = 00001111
+    flag = True
 
-if tres = 0 then
-    if cinco = 0 then
-        print FizzBuzz
-    else
-        print Fizz
-    end if
+    while n > 0
+        tres = (n - (n / 3 * 3))
+        cinco = (n - (n / 5 * 5))
 
-else
-    if tres = 0 then
-        print Fizz
-    else
-        if cinco = 0 then
-            print Buzz
-        else
-            print n
+        print n
+
+        if (tres = 0) and (cinco = 0) then
+            print fizzbuzz
+            flag = False
         end if
-    end if
-end if
 
+        if (tres = 0) and (flag = True) then
+            print fizz
+            flag = False
+        end if
+
+        if (cinco = 0) and (flag = True) then
+            print buzz
+            flag = False
+        end if
+
+        flag = True
+        n = n - 1
+    wend
 end sub
