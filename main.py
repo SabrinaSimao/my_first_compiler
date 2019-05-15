@@ -1,5 +1,6 @@
 import sys
 from Parser import *
+from Node import *
 
 class SymbolTable():
     def __init__(self):
@@ -40,3 +41,4 @@ if __name__ == '__main__':
     res = Parser.run(code)
     ST = SymbolTable()
     res.Evaluate(ST)
+    Assembler.create_assembly()
