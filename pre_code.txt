@@ -10,6 +10,8 @@ TRUE equ 1
 FALSE equ 0
 
 segment .data
+  newLineMsg db 0xA, 0xD
+  newLineLen equ $-newLineMsg
 
 segment .bss  ; variaveis
 res RESB 1
@@ -53,6 +55,11 @@ print_next:
   JMP print_next
 
 print_exit:
+  mov edx, newLineLen
+  mov ecx, newLineMsg
+  mov ebx, 1
+  mov eax, 4
+  int 0x80
   POP EBP
   RET
 
