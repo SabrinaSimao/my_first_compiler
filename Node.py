@@ -251,15 +251,15 @@ class IF(Node):
         
         condition = self.children[0].Evaluate(ST)
         Assembler.Write("CMP EBX, True")
-        Assembler.Write("JE if_{self.id}")
+        Assembler.Write("JE if_{}:".format(self.id))
 
         if len(self.children) == 3:
         #if there are else condition: evaluate them
             for f2 in self.children[2]:
                 f2.Evaluate(ST)
 
-        Assembler.Write("JMP EXIT_{self.id}")
-        Assembler.Write("if_{self.id}:")
+        Assembler.Write("JMP EXIT_{}:".format(self.id))
+        Assembler.Write("if_{}:".format(self.id))
 
         #if(condition[0] == 'TRUE' or condition[0] == True):
         #if condition is always evaluated
@@ -268,7 +268,7 @@ class IF(Node):
         #else:
         #    pass
 
-        Assembler.Write("EXIT_{self.id}:")
+        Assembler.Write("EXIT_{}:".format(self.id))
 
 class WHILE(Node):
     def __init__(self, value, children):
@@ -277,16 +277,16 @@ class WHILE(Node):
         self.id = Node.newID()
     
     def Evaluate(self, ST):
-        Assembler.Write("LOOP_{self.id}:")
+        Assembler.Write("LOOP_{}:".format(self.id))
         condition = self.children[0].Evaluate(ST)
         
         Assembler.Write("CMP EBX, False")
-        Assembler.Write("JE EXIT_{self.id}")
+        Assembler.Write("JE EXIT_{}:".format(self.id))
         #while (self.children[0].Evaluate(ST)[0] == True) or (self.children[0].Evaluate(ST)[0] == 'TRUE'):
         for f in self.children[1]:
             f.Evaluate(ST)
-        Assembler.Write("JMP LOOP_{self.id}")
-        Assembler.Write("EXIT_{self.id}:")
+        Assembler.Write("JMP LOOP_{}:".format(self.id))
+        Assembler.Write("EXIT_{}:".format(self.id))
 
 
 class Tipo(Node):
