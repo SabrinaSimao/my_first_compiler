@@ -6,6 +6,8 @@ STDIN equ 0
 STDOUT equ 1
 True equ 1
 False equ 0
+TRUE equ 1
+FALSE equ 0
 
 segment .data
 
@@ -13,7 +15,7 @@ segment .bss  ; variaveis
 res RESB 1
 
 section .text
-global __start
+global _start
 
 print:  ; subrotina print
 
@@ -77,7 +79,8 @@ binop_true:
 binop_exit:
   RET
 
-__start:
+_start:
+
 PUSH EBP  ;guarda o base pointer
 MOV EBP, ESP
 
