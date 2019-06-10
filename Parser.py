@@ -150,12 +150,12 @@ class Parser():
                     Parser.tokens.selectNext()
                     while(Parser.tokens.actual.type != ')'):
                         if(Parser.tokens.actual.type == 'identifier'):
-                            var_left = nd.Identifier(Parser.tokens.actual.value, [])
+                            vardec_left = nd.Identifier(Parser.tokens.actual.value, [])
                             Parser.tokens.selectNext()
                             if(Parser.tokens.actual.type == 'AS'):
                                 Parser.tokens.selectNext()
-                                var_right = Parser.tipo()
-                                right.append(nd.VarDec('VarDec', [var_left, var_right]))
+                                vardec_right = Parser.tipo()
+                                right.append(nd.VarDec('VarDec', [vardec_left, vardec_right]))
                         elif(Parser.tokens.actual.type == ','):
                             Parser.tokens.selectNext()
                     Parser.tokens.selectNext()
