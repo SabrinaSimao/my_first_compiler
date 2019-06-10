@@ -1,6 +1,6 @@
 from PrePro import *
 from Parser import *
-reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN', 'SUB', 'MAIN', 'INTEGER', 'BOOLEAN', 'DIM', 'AS', 'TRUE', 'FALSE']
+reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN', 'SUB', 'MAIN', 'INTEGER', 'BOOLEAN', 'DIM', 'AS', 'TRUE', 'FALSE', 'CALL', 'FUNCTION', ',']
 
 class Token():
 
@@ -52,7 +52,6 @@ class Tokenizer():
 
                 if value in reserved:
                     type = value
-                    value = 'reserved'
 
             elif self.origin[self.position] == '+':
                 type = 'PLUS'

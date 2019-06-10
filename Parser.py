@@ -1,50 +1,23 @@
 import Node as nd
 from Tokenizer import *
-reserved = ['PRINT', 'END', 'WHILE', 'WEND', 'IF', 'OR', 'AND', 'NOT', 'INPUT', 'ELSE', 'THEN', 'SUB', 'MAIN', 'INTEGER', 'BOOLEAN', 'DIM', 'AS', 'TRUE', 'FALSE']
 
 class Parser():
 
     def program():
-        node = nd.Statements('sta', [Parser.statement()])
-        if Parser.tokens.actual.type == 'SUB':
-            Parser.tokens.selectNext()
-            if Parser.tokens.actual.type == 'MAIN':
+        right = []
+        while(Parser.tokens.actual.type != 'EOF'):
+            if Parser.tokens.actual.type == 'SUB':
+                right.append(Parser.SubDec())
+            elif Parser.tokens.actual.type == 'FUNCTION':
+                right.append(Parser.FuncDec())
                 Parser.tokens.selectNext()
-                if Parser.tokens.actual.type == '(':
-                    Parser.tokens.selectNext()
-                    if Parser.tokens.actual.type == ')':
-                        Parser.tokens.selectNext()
-                        if Parser.tokens.actual.type == 'EOL':
-                            Parser.tokens.selectNext()
-                            tmp_program_list = []
-                            
-                            while Parser.tokens.actual.type != 'END':
-                                tmp_program_list.append(Parser.statement())
-                                if Parser.tokens.actual.type != 'EOL':
-                                    raise SyntaxError("Missing End of Line after statement - program block")
-                                else:
-                                    Parser.tokens.selectNext()
-                            
-                            Parser.tokens.selectNext()
-
-                            if Parser.tokens.actual.type == 'SUB': 
-                                Parser.tokens.selectNext()
-                                while Parser.tokens.actual.type == 'EOL':
-                                    Parser.tokens.selectNext()
-                                return nd.Statements('Sta', tmp_program_list)
-                            else:
-                                raise SyntaxError("Missing last SUB Statement - program block")
-                        else:
-                            raise SyntaxError("Missing EOL Statement - program block")
-                    else:
-                        raise SyntaxError("Missing ) Statement - program block")
-                else:
-                    raise SyntaxError("Missing ( Statement - program block")
+            elif Parser.tokens.actual.type == 'EOL':
+                Parser.tokens.selectNext()
             else:
-                raise SyntaxError("Missing MAIN Statement - program block")
-        else:
-            raise SyntaxError("Missing first SUB Statement - program block")
-        return node
+                raise SyntaxError('EXPECTING FUNCTION, SUB OR EOL TOKEN')  
+
+        right.append(nd.FuncCall('MAIN', []))     
+        return nd.Statements('Statements', right)
     
 
     def statement():
@@ -140,10 +113,115 @@ class Parser():
                 else:
                     raise SyntaxError("Missing THEN token - IF statement")
         
+        #CALL
+        elif Parser.tokens.actual.type == 'CALL':
+            
+            Parser.tokens.selectNext()
+            right = []
+            
+            if(Parser.tokens.actual.type == 'identifier'):
+                left = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if(Parser.tokens.actual.type == '('):
+                    Parser.tokens.selectNext()
+                    while(Parser.tokens.actual.type != ')'):
+                        right.append(Parser.relExpression())
+                        if(Parser.tokens.actual.type == ','):
+                            Parser.tokens.selectNext()
+                    Parser.tokens.selectNext()
+                else:
+                    raise SyntaxError("Missing ( in CALL")
+            else:
+                raise SyntaxError("Missing identifier after CALL")
+            return nd.FuncCall(left,right)
+
         # no op
         else:
             return nd.NoOp(None, None)
 
+    def SubDec():
+        right = []
+        if(Parser.tokens.actual.type == 'SUB'):
+            Parser.tokens.selectNext()
+            if(Parser.tokens.actual.type == 'identifier' or Parser.tokens.actual.type == 'MAIN'):
+                left = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if(Parser.tokens.actual.type == '('):
+                    Parser.tokens.selectNext()
+                    while(Parser.tokens.actual.type != ')'):
+                        if(Parser.tokens.actual.type == 'identifier'):
+                            var_left = nd.Identifier(Parser.tokens.actual.value, [])
+                            Parser.tokens.selectNext()
+                            if(Parser.tokens.actual.type == 'AS'):
+                                Parser.tokens.selectNext()
+                                var_right = Parser.tipo()
+                                right.append(nd.VarDec('VarDec', [var_left, var_right]))
+                        elif(Parser.tokens.actual.type == ','):
+                            Parser.tokens.selectNext()
+                    Parser.tokens.selectNext()
+                    if(Parser.tokens.actual.type == 'EOL'):
+                        Parser.tokens.selectNext()
+                        statement_list = []
+                        while(Parser.tokens.actual.type != 'END'):
+                            statement_list.append(Parser.statement())
+                            if(Parser.tokens.actual.type == 'EOL'):
+                                Parser.tokens.selectNext()
+                            else:
+                                raise SyntaxError("Missing EOL after statement in subdec")
+                        Parser.tokens.selectNext()
+                        right.append(nd.Statements('Statements', statement_list))
+                        if(Parser.tokens.actual.type == 'SUB'):
+                            Parser.tokens.selectNext()
+                        
+                    else:
+                        raise SyntaxError("Missing End of Line in SubDec")
+            else:
+                raise SyntaxError("Missing identifier after SUB")
+        else:
+            raise SyntaxError("Missing first SUB token")
+        return nd.SubDec(left, right)
+
+    def FuncDec():
+        right = []
+        if(Parser.tokens.actual.type == 'FUNCTION'):
+            Parser.tokens.selectNext()
+            if(Parser.tokens.actual.type == 'identifier' or Parser.tokens.actual.type == 'MAIN'):
+                left = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if(Parser.tokens.actual.type == '('):
+                    Parser.tokens.selectNext()
+                    while (Parser.tokens.actual.type != ')'):
+                        if(Parser.tokens.actual.type == 'identifier'):
+                            vardec_left = nd.Identifier(Parser.tokens.actual.value, [])
+                            Parser.tokens.selectNext()
+                            if(Parser.tokens.actual.type == 'AS'):
+                                Parser.tokens.selectNext()
+                                vardec_right = Parser.tipo()
+                                right.append(nd.VarDec('VarDec', [vardec_left, vardec_right]))
+                        if(Parser.tokens.actual.type == ','):
+                            Parser.tokens.selectNext()
+                    Parser.tokens.selectNext()
+                    if(Parser.tokens.actual.type == 'AS'):
+                        Parser.tokens.selectNext()
+                        right.insert(0, Parser.tipo())
+                    if(Parser.tokens.actual.type == 'EOL'):
+                        Parser.tokens.selectNext()
+                        statement_list = []
+                        while(Parser.tokens.actual.type != 'END'):
+                            statement_list.append(Parser.statement())
+                            if(Parser.tokens.actual.type == 'EOL'):
+                                Parser.tokens.selectNext()
+                        Parser.tokens.selectNext()
+                        right.append(nd.Statements('Statements', statement_list))
+                        if(Parser.tokens.actual.type == 'FUNCTION'):
+                            Parser.tokens.selectNext()
+                    else:
+                        raise SyntaxError("Missing End of Line in SubDec")
+            else:
+                raise SyntaxError("Missing identifier after SUB")
+        else:
+            raise SyntaxError("Missing first SUB token")
+        return nd.FuncDec(left, right)
 
     def parseExpression():
         
@@ -241,17 +319,17 @@ class Parser():
         new_token = Parser.tokens.actual
 
         # check if token is unary operator
-        if(new_token.type == "PLUS" or new_token.type == "MINUS" or new_token.type == "NOT"):
-            if(new_token.type == "PLUS"):
+        if(new_token.type == 'PLUS' or new_token.type == 'MINUS' or new_token.type == 'NOT'):
+            if(new_token.type == 'PLUS'):
                 
                 Parser.tokens.selectNext()
                 return nd.UnOp('+',[Parser.fator()])
                 
-            elif(new_token.type == "MINUS"):
+            elif(new_token.type == 'MINUS'):
                 Parser.tokens.selectNext()
                 return nd.UnOp('-',[Parser.fator()])
 
-            elif(new_token.type == "NOT"):
+            elif(new_token.type == 'NOT'):
                 Parser.tokens.selectNext()
                 return nd.UnOp('~',[Parser.fator()])
                 
@@ -259,7 +337,7 @@ class Parser():
                 raise TypeError("Invalid Token Error: ", new_token.type)
 
         # check if token is a number
-        elif new_token.type == "INT":
+        elif new_token.type == 'INT':
             left = nd.IntVal(new_token.value, [])
             Parser.tokens.selectNext()
             return left
@@ -272,21 +350,31 @@ class Parser():
 
         # check if token is a variable
         elif new_token.type == 'identifier':
-            left = nd.Identifier(new_token.value, [])
+            left = new_token.value
             Parser.tokens.selectNext()
-            return left
-
+            if(Parser.tokens.actual.type == '('):
+                Parser.tokens.selectNext()
+                right = []
+                while (Parser.tokens.actual.type != ')'):
+                    right.append(Parser.relExpression())
+                    if(Parser.tokens.actual.type == ','):
+                        Parser.tokens.selectNext()
+                Parser.tokens.selectNext()
+                return nd.FuncCall(left, right)
+            else:
+                return nd.Identifier(left, [])
+            
         elif new_token.type == 'INPUT':
             left = nd.Input('input', [])
             Parser.tokens.selectNext()
             return left
             
         # check if token is parentesis
-        elif new_token.type == "(":
+        elif new_token.type == '(':
             Parser.tokens.selectNext()
             left = Parser.relExpression()
             new_token = Parser.tokens.actual
-            if new_token.type == ")":
+            if new_token.type == ')':
                 Parser.tokens.selectNext()
                 return left
             else:

@@ -1,23 +1,58 @@
+from main import *
+
 class Node():
 
-    i = 0
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
-        
-    def newID():
-        Node.i += 1
-        return Node.i
     
     def Evaluate(self, ST):
         pass
+
+class FuncDec(Node):
+    def __init__(self, value, children):
+            self.value = value
+            self.children = children
+
+    def Evaluate(self, ST):
+        ST.creator(self.value, None, 'FUNCTION')
+        ST.setter(self.value, self)
+
+class SubDec(Node):
+    def __init__(self, value, children):
+            self.value = value
+            self.children = children
+
+    def Evaluate(self, ST):
+        ST.creator(self.value, None, 'SUB')
+        ST.setter(self.value, self)
+
+class FuncCall(Node):
+    def __init__(self, value, children):
+            self.value = value
+            self.children = children
+
+    def Evaluate(self, ST):   
+        func = ST.getter(self.value)[0]
+        func_type = ST.getter(self.value)[1]
+        table = SymbolTable(anc=ST)
+        is_func = 0
+        if(func_type == 'FUNCTION'):
+            table.creator(self.value, None, func.children[0].Evaluate(table))
+            is_func = 1
+        n = 0
+        for i in range(is_func, len(func.children)-1):
+            func.children[i].Evaluate(table)
+            table.setter(func.children[i].children[0].value, self.children[n].Evaluate(ST)[0])
+            n += 1
+        func.children[-1].Evaluate(table)
+        if is_func:
+            return table.dic[self.value]
 
 class Assignment(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
     
     def Evaluate(self, ST):
         f1 = self.children[1].Evaluate(ST)
@@ -41,7 +76,7 @@ class UnOp(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
 
@@ -72,17 +107,17 @@ class Statements(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
 
     def Evaluate(self, ST):
         for i in self.children:
-           i.Evaluate(ST)
+            i.Evaluate(ST)
 
 class Print(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
 
     def Evaluate(self, ST):
         f = self.children[0].Evaluate(ST)
@@ -92,7 +127,7 @@ class BinOp(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
 
     def Evaluate(self, ST):
 
@@ -150,7 +185,7 @@ class IntVal(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         return [int(self.value), 'INTEGER']
@@ -160,7 +195,7 @@ class BoolVal(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         return [self.value, 'BOOLEAN']
@@ -169,7 +204,7 @@ class Identifier(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         try:
@@ -183,7 +218,7 @@ class Input(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         try:
@@ -197,7 +232,7 @@ class NoOp(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         pass
@@ -206,7 +241,7 @@ class IF(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         
@@ -224,7 +259,7 @@ class WHILE(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
     
     def Evaluate(self, ST):
         while (self.children[0].Evaluate(ST)[0] == True) or (self.children[0].Evaluate(ST)[0] == 'TRUE'):
@@ -235,7 +270,7 @@ class Tipo(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
 
     def Evaluate(self, ST):
         return self.value
@@ -244,7 +279,7 @@ class VarDec(Node):
     def __init__(self, value, children):
         self.value = value
         self.children = children
-        self.id = Node.newID()
+        
 
     def Evaluate(self, ST):
         f0 = self.children[0].value
