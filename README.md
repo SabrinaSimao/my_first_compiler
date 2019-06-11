@@ -1,7 +1,7 @@
 # my_first_compiler
 Compiler Repository for Computer Logic Discipline at Insper
 
-![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/slide1.png)
-![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/slide2.png)
-![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/slide3.png)
-![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/slide4.png)
+![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/Slide1.PNG)
+![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/Slide2.PNG)
+![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/Slide3.PNG)
+![alt text](https://github.com/SabrinaSimao/my_first_compiler/blob/master/imgs/Slide4.PNG)
