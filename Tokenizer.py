@@ -53,6 +53,11 @@ class Tokenizer():
                 if value in reserved:
                     type = value
 
+            elif self.origin[self.position] == ',':
+                type = ','
+                value = ','
+                self.position += 1
+
             elif self.origin[self.position] == '+':
                 type = 'PLUS'
                 value = '+'

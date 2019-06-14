@@ -1,21 +1,20 @@
-function fibonacci(n as integer) as integer
-    dim flag as boolean
-    flag = false
-    if n = 0 then
-        fibonacci = 1
-        flag = true
+Function test(a as integer, c as integer) as integer
+    print a
+
+    Dim b as integer
+    b = a * 5
+
+    if b < c then
+        test = b
+    else
+        test = a
     end if
 
-    if n = 1 then 
-        fibonacci = 1
-        flag = true
-    end if
+End Function
 
-    if flag = false then
-        fibonacci = fibonacci(n-2) + fibonacci(n-1)
-    end if
-
-end function
-sub Main()
-    print fibonacci(12)
-end sub
+Sub main()
+    ' hello world
+    Dim top as integer
+    top = input
+    print test(top, 100)
+End Sub
