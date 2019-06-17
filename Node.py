@@ -134,12 +134,15 @@ class BinOp(Node):
         elif self.value == '=':
             Assembler.Write("CMP EAX, EBX")
             Assembler.Write("CALL binop_je")
+            return (f0 == f1)
         elif self.value == '>':
             Assembler.Write("CMP EAX, EBX")
             Assembler.Write("CALL binop_jg")
+            return (f0 > f1)
         elif self.value == '<':
             Assembler.Write("CMP EAX, EBX")
             Assembler.Write("CALL binop_jl")
+            return (f0 < f1)
         elif self.value == 'OR':
             Assembler.Write("OR EAX, EBX")
             Assembler.Write("MOV EBX, EAX")
