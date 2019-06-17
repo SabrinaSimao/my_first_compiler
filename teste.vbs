@@ -1,44 +1,12 @@
-Sub Main()
-dim fizz as integer
-dim buzz as integer
-dim fizzbuzz as integer
-dim n as integer
-dim tres as integer
-dim cinco as integer
-dim teste as integer
+Sub main()
+    ' bool ops
+    Dim bt as boolean
+    Dim bf as boolean
+    bt = True
+    bf = False
 
-n = INPUT
-Fizz = 7155
-Buzz = 8055
-FizzBuzz = 71558055
-teste = 7
-
-tres = (n - (n / 3 * 3))
-cinco = (n - (n / 5 * 5))
-
-if tres = 0 then
-    if cinco = 0 then
-        print FizzBuzz
-    else
-        print Fizz
-    end if
-
-else
-    if tres = 0 then
-        print Fizz
-    else
-        if cinco = 0 then
-            print Buzz
-        else
-            print n
-        end if
-    end if
-end if
-
-While teste < 40 then
-
-    print teste
-    teste = teste + 10
-Wend
-
+    print bf and bt
+    print bf or bt
+    print not(not(bf))
+    print not(bt and bf)
 end sub

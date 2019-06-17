@@ -46,9 +46,10 @@ class Assignment(Node):
     
     def Evaluate(self, ST):
         #this will write "mov ebx, value"
+        f0 = self.children[0].value
         f1 = self.children[1].Evaluate(ST)
-        
-        Assembler.Write("MOV [EBP-{}], EBX".format(ST.getter(self.children[0].value)[2]))
+        ST.setter(f0, f1)
+        Assembler.Write("MOV [EBP-{}], EBX".format(ST.getter(f0)[2]))
 
 
 class UnOp(Node):
@@ -69,7 +70,10 @@ class UnOp(Node):
                 Assembler.Write("IMUL EBX")
                 Assembler.Write("MOV EBX, EAX")
         elif self.value == '~':
-                Assembler.Write("NEG EBX")
+                if f0 == False or f0 == 'FALSE':
+                    Assembler.Write("MOV EBX, TRUE")
+                else:
+                    Assembler.Write("MOV EBX, FALSE")
         else:
             print("master blaster error")
 
@@ -102,11 +106,19 @@ class BinOp(Node):
         self.id = Node.newID()
 
     def Evaluate(self, ST):
-
+        
         f0 = self.children[0].Evaluate(ST)
         Assembler.Write("PUSH EBX")
         f1 = self.children[1].Evaluate(ST)
         Assembler.Write("POP EAX")
+        if f0 == 'TRUE':
+            f0 = True
+        if f0 == 'FALSE':
+            f0 = False
+        if f1 == 'TRUE':
+            f1 = True
+        if f1 == 'FALSE':
+            f1 = False
         if self.value == '+':
             Assembler.Write("ADD EAX, EBX")
             Assembler.Write("MOV EBX, EAX")
@@ -131,9 +143,11 @@ class BinOp(Node):
         elif self.value == 'OR':
             Assembler.Write("OR EAX, EBX")
             Assembler.Write("MOV EBX, EAX")
+            return (f0 or f1)
         elif self.value == 'AND':
             Assembler.Write("AND EAX, EBX")
             Assembler.Write("MOV EBX, EAX")
+            return (f0 and f1)
         else:
             print("master blaster error")
 
@@ -155,6 +169,7 @@ class BoolVal(Node):
     
     def Evaluate(self, ST):
         Assembler.Write("MOV EBX, {}".format(self.value))
+        return (self.value)
 
 class Identifier(Node):
     def __init__(self, value, children):
@@ -163,8 +178,10 @@ class Identifier(Node):
         self.id = Node.newID()
     
     def Evaluate(self, ST):
+        
         #colocar shift do getter da ST
         Assembler.Write("MOV EBX, [EBP-{}]".format(ST.getter(self.value)[2]))
+        return ST.getter(self.value)[0]
 
 class Input(Node):
     def __init__(self, value, children):
